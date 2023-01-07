@@ -1,0 +1,75 @@
+##### login  ( pseudo = pppnnn) #####
+# le mdp c'est notre num de matricule
+
+ssh -p 2002 flonic@193.190.248.163
+
+	
+#### transfert fichier vers machine Hadoop ####
+
+  scp -P 2002 <fichier à envoyer> flonic@193.160.248.163:/home/flonic
+# exemple :   scp -P 2002 masi* flonic@193.190.248.163:/home/flonic #
+
+#### Modification des variables d'environnement (si pas déjà fait) ####
+# Sur la machine Hapood
+
+export PATH=/usr/local/hadoop/sbin:/usr/local/hadoop/bin:$PATH
+export JAVA_HOME=/usr/lib/jvm/jre-openjdk
+
+
+#### Copier un dossier de sa machine Hadoop vers l’HDFS Hadoop ####
+
+hdfs dfs -copyFromLocal 1912.csv /HOME/flonic
+hdfs dfs -ls /HOME/flonic
+
+
+#### Localiser les blocks supports d'un fichier ####
+
+hdfs fsck /HOME/flonic/<fichier> -files -blocks -locations
+
+# blk_xxxxxxx = nom du bloc
+# Live_repl=X = Infos sur le bloc 
+# DatanodeInfoWithStorage[x.x.x.x] = localisation du bloc
+
+#### Trouver le block ####
+
+cd /
+find . -name '*blk...*'
+
+# répertoire du block
+/home/hadoop/hadoopdata/hdfs/datanode/current/BP<…>/current/finalized/subdir0blk_1073742436_1612
+
+
+#### vérifier les logs ####
+
+cat /usr/local/hadoop/logs/hadoop-hadoop-datanode-node<node number>.log | grep <nom du bloc>
+
+#### optionnel ####
+
+time awk -f max_temperature.awk 2020.csv
+
+
+# créer un fichier "max_temperature.awk" avec le contenu suivant (du code java) :
+BEGIN{
+FS=","
+MAX=-5000
+}
+/TMAX/{
+   if($6==""){
+   TEMP=$4 +0
+   if(TEMP>MAX) MAX=TEMP
+   }
+}
+END{
+print MAX/10.
+}
+
+#### une fois fait, on peut analyser la température maximum contenue dans un champ du fichier csv 2020.csv (et il y a beaucoup d'entrées) avec cette simple commande : ####
+
+time awk -f max_temperature.awk 2020.csv 
+cat max_temperature.awk
+
+#### Se déplacer dans le dossier masi.v0 et lancer la commande : ####
+
+mvn package
+# permet de compiler le programme avec maven
+
