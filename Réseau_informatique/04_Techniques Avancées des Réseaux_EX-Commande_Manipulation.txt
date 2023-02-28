@@ -1,0 +1,159 @@
+###################
+## Spanning Tree ##
+###################
+
+en 
+conf t
+hostname sw1
+### changement de la priorité.  J'étais root, je passe le relais à l'autre switch. ###
+spanning-tree vlan 1 priority 4096
+
+# pour PAgp
+int range fa0/20-21
+channel-group 1 mode on 
+
+# pour LACP
+int range fa0/20-21
+channel-group 1 mode active
+
+
+##########
+## OSPF ##
+##########
+
+## Ro-A ##
+en 
+conf t
+int G0/0/0
+ip address 192.168.0.2 255.255.255.0
+no sh
+exit
+int G0/0/1
+ip address 172.13.0.1 255.255.255.0
+no sh
+end
+write
+
+## Ro-FAI ##
+en 
+conf t
+int G0/0/0
+ip address 192.168.0.1 255.255.255.0
+no sh
+end
+write
+
+##########################################
+## activation ospf et définition DR BDR ##
+##########################################
+
+## Ro-A ##
+en 
+conf t
+router ospf 24
+end 
+write
+
+## Ro-FAI ##
+en 
+conf t
+router ospf 24
+end 
+write
+
+###############################
+## configuration réseau OSPF ##
+###############################
+## Ro-A ##
+en 
+conf t
+router ospf 24
+network 192.168.0.0 0.0.0.255 area 0
+network 172.13.0.0 0.0.255.255 area 0
+end 
+write
+
+## Ro-FAI ##
+en 
+conf t
+router ospf 24
+network 192.168.0.0 0.0.0.255 area 0
+end 
+write
+
+
+###########################################
+## configuration des interfaces passives ##
+###########################################
+
+## Ro-A ##
+en 
+conf t
+router ospf 24
+passive-interface G0/0/1
+end 
+write
+
+
+############################
+## configuration loopback ##
+############################
+
+## Ro-FAI ##
+en 
+conf t
+int loopback 0
+ip address 9.9.9.9 255.255.255.252
+no sh
+exit
+ip route 0.0.0.0 0.0.0.0 9.9.9.9
+router ospf 24
+network 9.9.9.9 0.0.0.3 area 0
+default-information originate
+
+
+
+################
+####  HSRP  ####
+################
+
+##########
+## Ro-A ##
+##########
+
+en
+conf t
+int gi0/0/1
+ip address 10.0.0.254 255.0.0.0
+ip stanby 1 ip 10.0.0.250
+
+
+##########
+## Ro-B ##
+##########
+
+en
+conf t
+int gi0/0/1
+ip address 10.0.0.253 255.0.0.0
+ip stanby 1 ip 10.0.0.250
+
+
+############
+## Ro-FAI ##
+############
+
+en conf t 
+int loopback 0
+ip address 9.9.9.9 255.255.255.252
+
+
+
+
+
+
+
+
+
+
+
